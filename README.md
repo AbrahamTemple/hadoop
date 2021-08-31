@@ -1,2 +1,1 @@
-# hadoop
-hadoop合集
+# hadoop合集
