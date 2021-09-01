@@ -136,7 +136,7 @@ Connection to hadoop620 closed.
     </property>
     <property>
         <name>hadoop.tmp.dir</name>
-        <value>file:/home/${user.name}/tmp</value>
+        <value>file:/home/hadoop/tmp</value>
         <description>A base for other temporary directories.</description>
     </property>
     <property>
@@ -171,6 +171,10 @@ Connection to hadoop620 closed.
      <property>
         <name>dfs.replication</name>
         <value>2</value>
+     </property>
+     <property>
+       <name>dfs.http.address</name>
+       <value>0.0.0.0:50070</value>
      </property>
      <property>
         <name>dfs.namenode.secondary.http-address</name>
@@ -292,6 +296,8 @@ export PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin
 
 - 对于start-dfs.sh和stop-dfs.sh文件，添加下列参数：
 
+> 直接启动不报错就不必须
+
 ``` shell
 #!/usr/bin/env bash
 HDFS_DATANODE_USER=root
@@ -301,6 +307,8 @@ HDFS_SECONDARYNAMENODE_USER=root
 ```
 
 - 对于start-yarn.sh和stop-yarn.sh文件，添加下列参数：
+
+> 直接启动不报错就不必须
 
 ``` shell
 #!/usr/bin/env bash
@@ -339,6 +347,6 @@ hadoop dfsadmin -report
 hdfs dfs -mkdir -p /home/hadoop/input
 ```
 
-> 2g云服务器运行内存使用情况：44.9%
+> 2g云服务器运行内存使用情况：48%
 
 > 预计范围45%~55%
