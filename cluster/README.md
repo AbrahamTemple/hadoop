@@ -1,15 +1,17 @@
 # docker搭建hadoop伪集群
 
+## docker容器构建
+
 - 安装基础镜像
 
 ``` shell
 [root@abrahamvonghome hadoop]# cd centos_hdp/centos
 [root@abrahamvonghome centos]# ls
 Dockerfile
-[root@abrahamvonghome centos]# docker build -t centos7_base .
+[root@abrahamvonghome centos]# docker build -t centos_base .
 ```
 
-- 构建网络
+- 构建docker网络
 
 ``` shell
 [root@abrahamvonghome centos]# docker network create -d bridge hadoop-network
@@ -19,15 +21,19 @@ Dockerfile
 
 - 测试ssh
 
+> 这个容器测试完可以删除
+
+> ip从docker network中获取，把127.0.0.1换掉
+
 ``` shell
-docker run --network=hadoop-network -itd --name=hadoop_ssh centos7_base
+docker run --network=hadoop-network -itd --name=hadoop_ssh centos_base
 [root@abrahamvonghome centos]# docker network inspect hadoop-network
-[root@abrahamvonghome centos]# ssh 172.21.0.2 -l hadoop
-The authenticity of host '172.21.0.2 (172.21.0.2)' can't be established.
+[root@abrahamvonghome centos]# ssh 127.0.0.1 -l hadoop
+The authenticity of host '127.0.0.1 (127.0.0.1)' can't be established.
 RSA key fingerprint is SHA256:Cn2GNlhifrEQMGNVMyirMRmvpRi3X3h29f8hxu0FWuE.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-Warning: Permanently added '172.21.0.2' (RSA) to the list of known hosts.
-hadoop@172.21.0.2's password:
+Warning: Permanently added '127.0.0.1' (RSA) to the list of known hosts.
+hadoop@127.0.0.1's password:
 [hadoop@00a41ce3975e ~]$ cd /etc
 [hadoop@00a41ce3975e etc]$ ls
 BUILDTIME                crypttab       gnupg      kdump          makedumpfile.conf.sample  pkcs11     rc5.d           ssl                 terminfo
@@ -53,6 +59,8 @@ crypto-policies          gcrypt         issue.net  machine-id     passwd-       
 ``` shell
 [root@abrahamvonghome centos_hdp]# docker build -t centos_hdp .
 ```
+
+## 相互交换私钥
 
 - 就centos_hdp运行三个容器
 
@@ -84,13 +92,15 @@ docker exec -it hadoop621 /bin/bash
 su hadoop
 ```
 
-- 都生成私钥
+- 都要生成私钥
 
 ``` shell
 ssh-keygen
 ```
 
 - 交换三个容器的登录私钥
+
+> 自己对自己也要交换私钥
 
 ``` shell
 ssh-copy-id -i ~/.ssh/id_rsa -p 22 hadoop@hadoop618
@@ -100,7 +110,7 @@ ssh-copy-id -i ~/.ssh/id_rsa -p 22 hadoop@hadoop621
 
 [hadoop@hadoop0 /]$ ssh-copy-id -i ~/.ssh/id_rsa -p 22 hadoop@hadoop620
 /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/hadoop/.ssh/id_rsa.pub"
-The authenticity of host 'hadoop620 (172.21.0.4)' can't be established.
+The authenticity of host 'hadoop620 (127.0.0.1)' can't be established.
 RSA key fingerprint is SHA256:Cn2GNlhifrEQMGNVMyirMRmvpRi3X3h29f8hxu0FWuE.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
@@ -117,6 +127,8 @@ and check to make sure that only the key(s) you wanted were added.
 logout
 Connection to hadoop620 closed.
 ```
+
+## 四大基本配置
 
 - 进入hadoop618修改配置
 
@@ -245,7 +257,11 @@ Connection to hadoop620 closed.
 </configuration>
 ```
 
-- 删除更新默认从机
+## 同步所有配置
+
+- 设置从机
+
+> 3版本以上才是改workers，2版本并不是
 
 ``` shell
 [root@hadoop0 /]# vi /usr/local/hadoop/etc/hadoop/workers
@@ -260,7 +276,7 @@ hadoop2
 export JAVA_HOME=/usr/local/jdk1.8
 ```
 
-- 现在将修改过后的hadoop文件发送给hadoop620和hadoop621容器
+- 618将修改过后的hadoop文件发送给hadoop620和hadoop621容器
 
 ``` shell
 [root@hadoop0 hadoop]# su hadoop
@@ -286,7 +302,7 @@ export PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin
 [root@hadoop2 /]# source ~/.bashrc
 ```
 
-- 三个容器中都要提升hadoop对hadoop文件夹权限
+- 三个容器都要提升hadoop对hadoop文件夹权限
 
 ``` shell
 [root@hadoop0 /]# chown -R hadoop /usr/local/hadoop/
@@ -294,9 +310,11 @@ export PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin
 [root@hadoop1 /]# chown -R hadoop /usr/local/hadoop/
 ```
 
+## 准备启动
+
 - 对于start-dfs.sh和stop-dfs.sh文件，添加下列参数：
 
-> 直接启动不报错就不必须
+> 直接启动成功就不必须
 
 ``` shell
 #!/usr/bin/env bash
@@ -308,7 +326,7 @@ HDFS_SECONDARYNAMENODE_USER=root
 
 - 对于start-yarn.sh和stop-yarn.sh文件，添加下列参数：
 
-> 直接启动不报错就不必须
+> 直接启动成功就不必须
 
 ``` shell
 #!/usr/bin/env bash
@@ -332,7 +350,6 @@ Starting resourcemanager
 Starting nodemanagers
 ```
 
-
 - 再加historyserver
 
 ``` shell
@@ -340,13 +357,24 @@ mr-jobhistory-daemon.sh start historyserver
 hadoop dfsadmin -report
 ```
 
-- 打开http://localhost:50070和http://localhost:8088查看是否运行正常
+## 测试
+
+- hfds打开http://localhost:50070
+
+![Screenshot](docs/hdp-hdfs.png)
+
+- yarn打开http://localhost:8088
+
+![Screenshot](docs/hdp-yarn.png)
 
 - 创建一个文件试试
+
 ``` shell
 hdfs dfs -mkdir -p /home/hadoop/input
 ```
 
-> 2g云服务器运行内存使用情况：48%
+> 云服务器运行内存使用情况（包括centos容器）：2379MB = 2.37G
 
-> 预计范围45%~55%
+> 2核4G服务器运行占比：64%
+
+> 1核2G还是别玩伪集群吧
