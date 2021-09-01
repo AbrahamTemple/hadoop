@@ -1,6 +1,6 @@
 # docker搭建hadoop伪集群
 
-## docker容器构建
+## hadoop容器构建
 
 - 安装基础镜像
 
@@ -62,7 +62,7 @@ crypto-policies          gcrypt         issue.net  machine-id     passwd-       
 
 ## 相互交换私钥
 
-- 就centos_hdp运行三个容器
+- 就centos_hdp镜像运行三个容器
 
 ``` shell
 docker run --network hadoop-network --name hadoop621 --hostname hadoop1 -d -P centos_hdp
@@ -76,7 +76,7 @@ e24c7e3c8684   centos_hdp                 "/usr/sbin/sshd -D"      52 seconds ag
 3783c12a1b2c   centos_hdp                 "/usr/sbin/sshd -D"      About a minute ago   Up About a minute   0.0.0.0:49153->22/tcp, :::49153->22/tcp                                                                                             hadoop621
 ```
 
-> 对于hadoop618来说，我们希望它能作为管理员，因此把它的端口50070和8088映射到我们自己的主机中
+> 我们最终希望能访问hadoop618转而控制hadoop620与hadoop621，因此把它的端口50070和8088暴露到外部网络
 
 - 进入三个容器
 
