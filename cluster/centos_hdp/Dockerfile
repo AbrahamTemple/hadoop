@@ -7,6 +7,6 @@ ENV JAVA_HOME /usr/local/jdk1.8
 ENV PATH $JAVA_HOME/bin:$PATH
 # 解压下载的Hadoop文件
 ADD hadoop-3.1.3.tar.gz /usr/local
-RUN mv /usr/local/hadoop-3.1.5 /usr/local/hadoop
+RUN mv /usr/local/hadoop-3.1.3 /usr/local/hadoop
 ENV HADOOP_HOME /usr/local/hadoop
 ENV PATH $HADOOP_HOME/bin:$PATH
