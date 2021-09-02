@@ -357,6 +357,13 @@ mr-jobhistory-daemon.sh start historyserver
 hadoop dfsadmin -report
 ```
 
+- 格式化
+
+``` bash
+hdfs namenode–format 
+hadoop namenode –format
+```
+
 ## 测试
 
 - hfds打开http://localhost:50070
